@@ -102,3 +102,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v1.4.${{ github.run_number }}" distribution/*.apk distribution/SHA256SUMS.txt --repo "${{ github.repository }}" --title "SINAL BT v1.4.${{ github.run_number }}" --notes "Aplicativo RootScope. Atualizacao assinada pelo GitHub. Uso educacional e autorizado." --target "${{ github.sha }}" --latest
+
+      - name: Publicar GitHub Release beta instalavel
+        if: env.SIGNING_READY != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p distribution-beta
+          cp app/build/outputs/apk/debug/app-debug.apk "distribution-beta/SINAL-BT-v1.4.${{ github.run_number }}-beta.apk"
+          (cd distribution-beta && sha256sum *.apk > SHA256SUMS.txt)
+          gh release create "v1.4.${{ github.run_number }}-beta" distribution-beta/*.apk distribution-beta/SHA256SUMS.txt \
+            --repo "${{ github.repository }}" --title "SINAL BT v1.4.${{ github.run_number }} - Beta" \
+            --notes "BUILD BETA DE TESTES. O aplicativo Android foi compilado e passou nos testes e Android Lint. Este APK usa a assinatura debug do GitHub Actions, que pode variar entre builds: nao espere atualizar por cima de outras betas ou da futura versao oficial. Para atualizar sem reinstalacao, configure os secrets de assinatura permanente conforme o README. Uso educacional e autorizado; sem exploracao ativa da CVE-2025-36911." \
+            --prerelease --target "${{ github.sha }}"

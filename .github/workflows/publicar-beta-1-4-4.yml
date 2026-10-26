@@ -1,0 +1,46 @@
+name: SINAL BT - Publicar beta 1.4.4 em Releases
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publicar-beta-1-4-4.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publicacao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Obter APK validado no build 4
+        uses: actions/download-artifact@v4
+        with:
+          repository: ${{ github.repository }}
+          run-id: 40393637006
+          name: SINAL-BT-v1.4.4-debug
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: produto
+
+      - name: Verificar arquivo e integridade
+        run: |
+          set -euo pipefail
+          test -s produto/app-debug.apk
+          test -s produto/app-debug.apk.sha256
+          (cd produto && sha256sum -c app-debug.apk.sha256)
+          cp produto/app-debug.apk produto/SINAL-BT-v1.4.4-beta.apk
+          (cd produto && sha256sum SINAL-BT-v1.4.4-beta.apk > SHA256SUMS.txt)
+
+      - name: Publicar Release beta no GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create v1.4.4-beta produto/SINAL-BT-v1.4.4-beta.apk produto/SHA256SUMS.txt \
+            --repo "${{ github.repository }}" \
+            --title "SINAL BT v1.4.4 - Beta Android" \
+            --notes "Primeira versao de testes do SINAL BT RootScope no GitHub Releases. APK compilado e validado no workflow #4 (testes unitarios e Android Lint aprovados). Esta versao usa assinatura de depuracao e NAO suporta garantia de atualizacao sobre futuras builds; ao migrar para versao oficial assinada pode ser preciso desinstalar preservando seus relatorios. O aplicativo permite scanner BLE/Classic e diagnostico autorizado, sem forcar pareamento ou explorar ativamente CVE-2025-36911. Desenvolvedor: Joao Guilherme / @rootscope.br." \
+            --prerelease --target "${{ github.sha }}"
