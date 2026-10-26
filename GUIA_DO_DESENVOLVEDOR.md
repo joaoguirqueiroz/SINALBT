@@ -31,7 +31,7 @@ Sem Git instalado, use o editor online do GitHub, faça commit na branch `main` 
 - **Falha no lint/testes:** abra o log, corrija Kotlin/manifest, faça push novamente.
 - **Build verde mas sem Release:** configure os quatro Secrets de assinatura e faça um novo push.
 - **Instalador acusa aplicativo não instalado:** certificado diferente, versãoCode regressivo, compatibilidade ou restrições do Android; exporte histórico antes de migrar de uma versão debug para release.
-- **Atualizador diz repositório inexistente:** o app exige `joaoguirqueiroz/sinal-bt-android` **público**, com Release oficial (não apenas Artifacts).
+- **Atualizador diz repositório inexistente:** o app exige `joaoguirqueiroz/SINALBT` **público**, com Release oficial (não apenas Artifacts).
 - **Não encontrou dispositivo:** Bluetooth ligado, permissões próximas e, no Android 8–11, localização quando exigida; alguns aparelhos não anunciam enquanto conectados.
 
 ### Segurança

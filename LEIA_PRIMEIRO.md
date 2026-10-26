@@ -1,14 +1,12 @@
-# SINAL BT — pacote de entrega
+# SINAL BT — estrutura corrigida no GitHub
 
-## O que você recebeu
+Os arquivos do projeto Android estão na raiz deste repositório, com o workflow em `.github/workflows/android.yml`.
 
-1. **`SINAL_BT_v1.3.0_beta_instalavel.apk`** — APK Android real compilado no GitHub Actions, para testes de instalação. Não é uma versão oficial assinada para atualização contínua.
-2. **`PROJETO_ENVIAR_AO_GITHUB/`** — código-fonte 1.4.0, GitHub Actions, publicação automática de versões, telas, logotipo e documentação.
+- Consulte [README.md](README.md) e [PRIMEIROS_PASSOS.md](PRIMEIROS_PASSOS.md).
+- Abra a aba **Actions** para verificar os testes e baixar o APK de desenvolvimento gerado após cada push.
+- Para publicar versões oficiais com atualização pelo aplicativo, configure uma única vez os secrets de assinatura conforme [ATUALIZACOES_GITHUB.md](ATUALIZACOES_GITHUB.md).
+- O antigo APK beta de depuração está preservado em `downloads/`, mas pode exigir desinstalação ao migrar para a assinatura oficial.
 
-## O que enviar ao GitHub
+**Repositório:** https://github.com/joaoguirqueiroz/SINALBT
 
-Envie **somente o CONTEÚDO da pasta `PROJETO_ENVIAR_AO_GITHUB/`** para um repositório **público** chamado `joaoguirqueiroz/sinal-bt-android`. **Não envie o arquivo beta APK nem este README de pacote**.
-
-A cada push em `main` será gerado um APK de teste em Actions. Para que o Actions **publique também a versão oficial em Releases** e o celular possa atualizar sem buscar arquivos manualmente, configure uma vez os Secrets usando o guia `PRIMEIROS_PASSOS.md` e o script `tools/CONFIGURAR_ASSINATURA_WINDOWS.ps1`.
-
-**Importante:** Android sempre requer um pacote APK para distribuição direta; o fluxo automatiza download e disponibilização. A instalação de atualizações pode exigir confirmação. O APK 1.3.0 debug não atualiza diretamente para produção se a assinatura for diferente. O projeto 1.4.0 ainda precisa passar pela compilação do próprio repositório e pelos testes de hardware.
+**Segurança:** use apenas em dispositivos próprios ou autorizados. O aplicativo não prova nem explora automaticamente a CVE-2025-36911.

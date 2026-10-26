@@ -1,0 +1,90 @@
+name: SINAL BT - Android Build e Releases
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sinal-bt-main
+  cancel-in-progress: false
+
+jobs:
+  android:
+    name: Compilar, testar e publicar
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Configurar Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Verificar estrutura
+        run: python3 tools/check_project.py
+      - name: Testar e compilar APK de desenvolvimento
+        env:
+          SINAL_VERSION_NAME: 1.4.${{ github.run_number }}
+        run: |
+          gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          sha256sum app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/app-debug.apk.sha256
+      - name: Publicar APK de teste em Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SINAL-BT-v1.4.${{ github.run_number }}-debug
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/app-debug.apk.sha256
+          retention-days: 30
+          if-no-files-found: error
+      - name: Verificar assinatura permanente
+        env:
+          KEYSTORE_B64: ${{ secrets.SINAL_SIGNING_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.SINAL_SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SINAL_SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SINAL_SIGNING_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$STORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "SIGNING_READY=true" >> "$GITHUB_ENV"
+          else
+            echo "SIGNING_READY=false" >> "$GITHUB_ENV"
+            echo "::notice::Configure a assinatura para publicar releases. O APK debug esta em Artifacts."
+          fi
+      - name: Preparar chave de assinatura
+        if: env.SIGNING_READY == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.SINAL_SIGNING_KEYSTORE_B64 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/sinal-sign"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/sinal-sign/release.jks"
+          test -s "$RUNNER_TEMP/sinal-sign/release.jks"
+          echo "SINAL_SIGNING_STORE=$RUNNER_TEMP/sinal-sign/release.jks" >> "$GITHUB_ENV"
+      - name: Compilar APK release assinado
+        if: env.SIGNING_READY == 'true'
+        env:
+          SINAL_SIGNING_STORE_PASSWORD: ${{ secrets.SINAL_SIGNING_STORE_PASSWORD }}
+          SINAL_SIGNING_KEY_ALIAS: ${{ secrets.SINAL_SIGNING_KEY_ALIAS }}
+          SINAL_SIGNING_KEY_PASSWORD: ${{ secrets.SINAL_SIGNING_KEY_PASSWORD }}
+          SINAL_VERSION_NAME: 1.4.${{ github.run_number }}
+        run: |
+          gradle --no-daemon --stacktrace :app:assembleRelease
+          test -s app/build/outputs/apk/release/app-release.apk
+          mkdir -p distribution
+          cp app/build/outputs/apk/release/app-release.apk "distribution/SINAL-BT-v1.4.${{ github.run_number }}.apk"
+          (cd distribution && sha256sum *.apk > SHA256SUMS.txt)
+      - name: Criar GitHub Release
+        if: env.SIGNING_READY == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v1.4.${{ github.run_number }}" distribution/*.apk distribution/SHA256SUMS.txt --repo "${{ github.repository }}" --title "SINAL BT v1.4.${{ github.run_number }}" --notes "Aplicativo RootScope. Atualizacao assinada pelo GitHub. Uso educacional e autorizado." --target "${{ github.sha }}" --latest

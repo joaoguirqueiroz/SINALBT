@@ -10,4 +10,4 @@ As atualizações do SINAL BT 1.4.x são publicadas automaticamente a cada push 
 
 O Android ainda distribui pacotes APK internamente e pode solicitar autorização. O primeiro download deve acontecer por um canal de distribuição confiável. A atualização exige que o APK novo preserve a mesma assinatura e identificador de pacote; a versão de desenvolvimento v1.3.0 tem assinatura de debug e poderá exigir uma desinstalação inicial.
 
-**Repositório configurado no código:** `joaoguirqueiroz/sinal-bt-android`. Ele deve ser público para que o app consulte `releases/latest` sem token. Mantenha o site RootScope privado.
+**Repositório configurado no código:** `joaoguirqueiroz/SINALBT`. Ele deve ser público para que o app consulte `releases/latest` sem token. Mantenha o site RootScope privado.

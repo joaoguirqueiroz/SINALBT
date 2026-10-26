@@ -4,7 +4,7 @@
   Configura uma única vez a chave privada do SINAL BT como GitHub Actions Secrets.
   Execute APENAS no seu computador, nunca no GitHub Actions.
 #>
-param([string]$Repositorio = "joaoguirqueiroz/sinal-bt-android")
+param([string]$Repositorio = "joaoguirqueiroz/SINALBT")
 $ErrorActionPreference = "Stop"
 function Need($name) { if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { throw "Ferramenta ausente: $name. Instale e execute novamente." } }
 Need keytool

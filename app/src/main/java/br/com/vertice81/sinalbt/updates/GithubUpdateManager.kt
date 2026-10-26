@@ -98,7 +98,7 @@ class GithubUpdateManager(private val activity: Activity) {
                     val path = uri.pathSegments
                     val validLocation = uri.scheme == "https" && uri.host.equals("github.com", true) &&
                         path.size == 6 && path[0].equals("joaoguirqueiroz", true) &&
-                        path[1].equals("sinal-bt-android", true) && path[2] == "releases" &&
+                        path[1].equals("SINALBT", true) && path[2] == "releases" &&
                         path[3] == "download" && path[4] == obj.optString("tag_name")
                     if (name.startsWith("SINAL-BT-") && name.endsWith(".apk", true) &&
                         validLocation && asset.optLong("size") > 100_000L) {

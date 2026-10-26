@@ -12,14 +12,14 @@ O pacote de entrega fornecido separadamente contém `SINAL_BT_v1.3.0_beta_instal
 
 ## GitHub: instalar e receber versões sem gerenciar APK manualmente
 
-1. Crie um repositório **público** `joaoguirqueiroz/sinal-bt-android` (o repositório do site `rootscope` deve continuar privado).
+1. Use o repositório **público** existente `joaoguirqueiroz/SINALBT` (o repositório do site `rootscope` deve continuar privado).
 2. Envie o **conteúdo desta pasta** para a raiz do repositório, preservando `.github/workflows/android.yml`.
 3. A cada push na branch `main`, o GitHub Actions compila, testa e publica um **APK de teste** em `Actions → Artifacts`.
 4. Uma única vez, no seu computador com JDK e GitHub CLI, execute `powershell -ExecutionPolicy Bypass -File tools/CONFIGURAR_ASSINATURA_WINDOWS.ps1`. A ferramenta gera/guarda localmente a chave e envia ao repositório **apenas os GitHub Actions Secrets** necessários. Nunca publique a chave no repositório.
 5. Depois da configuração, cada push na branch `main` publica também uma **Release oficial assinada**, com versão numerada automaticamente (`v1.4.1`, `v1.4.2`, etc.).
 6. No SINAL BT, abra **Sobre → Atualizações oficiais pelo GitHub**; toque **Procurar atualizações** e **Baixar** quando necessário. O Android pedirá autorização antes de instalar; não há instalação silenciosa fora dos mecanismos autorizados.
 
-O **download inicial** da versão oficial será encontrado em [`Releases`](https://github.com/joaoguirqueiroz/sinal-bt-android/releases) quando o repositório e a primeira publicação existirem. Também é possível usar o [Obtainium](https://obtainium.imranr.dev/) para acompanhar futuras versões.
+O **download inicial** da versão oficial será encontrado em [`Releases`](https://github.com/joaoguirqueiroz/SINALBT/releases) quando o repositório e a primeira publicação existirem. Também é possível usar o [Obtainium](https://obtainium.imranr.dev/) para acompanhar futuras versões.
 
 ## Guias completos
 
@@ -38,7 +38,7 @@ O **download inicial** da versão oficial será encontrado em [`Releases`](https
 - **Java/JDK:** 17
 - **Gradle:** 8.9
 - **Identificador:** `br.com.vertice81.sinalbt`
-- **Repositório de atualizações:** `joaoguirqueiroz/sinal-bt-android`
+- **Repositório de atualizações:** `joaoguirqueiroz/SINALBT`
 
 ## Verificações
 

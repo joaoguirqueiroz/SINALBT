@@ -16,7 +16,7 @@ android {
         // Localmente, o projeto mantém uma versão estável para desenvolvimento.
         versionCode = 14000 + (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0)
         versionName = System.getenv("SINAL_VERSION_NAME") ?: "1.4.0"
-        buildConfigField("String", "UPDATES_REPO", "\"joaoguirqueiroz/sinal-bt-android\"")
+        buildConfigField("String", "UPDATES_REPO", "\"joaoguirqueiroz/SINALBT\"")
     }
 
     buildFeatures {

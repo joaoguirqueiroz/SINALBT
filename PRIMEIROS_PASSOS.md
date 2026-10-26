@@ -4,9 +4,9 @@
 
 Baixe do pacote de entrega `SINAL_BT_v1.3.0_beta_instalavel.apk`. Ele foi compilado em GitHub Actions, mas **não foi testado em hardware real**. Permita a instalação pelo navegador/gerenciador de arquivos quando o Android solicitar.
 
-### 2. Crie um repositório de distribuição público
+### 2. Repositório público já criado
 
-Abra `https://github.com/new`, preencha **Repository name: `sinal-bt-android`**, Visibility **Public** e crie sem README adicional. **Não torne público o repositório privado do site RootScope**.
+O repositório público já está criado em `https://github.com/joaoguirqueiroz/SINALBT`. **Não torne público o repositório privado do site RootScope**.
 
 ### 3. Suba o código
 
@@ -17,13 +17,13 @@ git init
 git branch -M main
 git add .
 git commit -m "feat: SINAL BT com atualizacoes e GitHub Actions"
-git remote add origin https://github.com/joaoguirqueiroz/sinal-bt-android.git
+git remote add origin https://github.com/joaoguirqueiroz/SINALBT.git
 git push -u origin main
 ```
 
 ### 4. Baixe o primeiro APK gerado pelo seu GitHub
 
-Abra `https://github.com/joaoguirqueiroz/sinal-bt-android/actions` → última execução verde → **Artifacts → SINAL-BT-v1.4.X-debug**. Esse é um APK de testes, criado automaticamente a cada push na branch main.
+Abra `https://github.com/joaoguirqueiroz/SINALBT/actions` → última execução verde → **Artifacts → SINAL-BT-v1.4.X-debug**. Esse é um APK de testes, criado automaticamente a cada push na branch main.
 
 ### 5. Uma única vez, configure a chave de assinatura
 
