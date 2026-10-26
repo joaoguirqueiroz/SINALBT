@@ -84,6 +84,7 @@ class BluetoothController(private val context: Context, private val events: Even
     private var bleScannerCallback: ScanCallback? = null
     private var classicReceiver: BroadcastReceiver? = null
     private val bondReceiver = object : BroadcastReceiver() {
+        @SuppressLint("MissingPermission") // protegido por hasConnectPermission() e runCatching
         override fun onReceive(ctx: Context, intent: Intent) {
             if (intent.action != BluetoothDevice.ACTION_BOND_STATE_CHANGED) return
             val changed = getDeviceFromIntent(intent) ?: return
