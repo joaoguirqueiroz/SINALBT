@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 180" role="img" aria-label="SINAL BT">
+  <rect width="620" height="180" rx="24" fill="#10151B"/>
+  <rect x="28" y="28" width="124" height="124" rx="19" fill="#243039" stroke="#394853" stroke-width="2"/>
+  <path d="M51 59 H74 L90 121 L106 59 H129" fill="none" stroke="#E6BA7B" stroke-width="9" stroke-linejoin="miter" stroke-linecap="square"/>
+  <path d="M56 130 H73 M107 130 H124" stroke="#F3F5F2" stroke-width="6" stroke-linecap="square"/>
+  <text x="184" y="99" fill="#F3F5F2" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="60" letter-spacing="2">SINAL BT</text>
+  <text x="188" y="129" fill="#C0CBCF" font-family="Arial,Helvetica,sans-serif" font-weight="500" font-size="14" letter-spacing="2">BLUETOOTH SECURITY LAB</text>
+</svg>

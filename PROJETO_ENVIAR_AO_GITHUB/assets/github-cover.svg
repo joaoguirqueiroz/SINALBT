@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" role="img" aria-label="SINAL BT — Bluetooth Security Lab">
+  <rect width="1280" height="420" fill="#10151B"/>
+  <path d="M0 1 H1280 M0 419 H1280" stroke="#394853" stroke-width="2"/>
+  <rect x="74" y="84" width="164" height="164" rx="27" fill="#243039" stroke="#394853" stroke-width="2"/>
+  <path d="M100 125 H130 L156 211 L182 125 H212" fill="none" stroke="#E6BA7B" stroke-width="11" stroke-linecap="square"/>
+  <path d="M111 220 H134 M178 220 H201" stroke="#F3F5F2" stroke-width="7" stroke-linecap="square"/>
+  <text x="284" y="170" fill="#F3F5F2" font-family="Arial,Helvetica,sans-serif" font-size="74" font-weight="700" letter-spacing="3">SINAL BT</text>
+  <text x="289" y="212" fill="#C0CBCF" font-family="Arial,Helvetica,sans-serif" font-size="19" letter-spacing="3">BLUETOOTH SECURITY LAB · ANDROID</text>
+  <line x1="80" y1="309" x2="1200" y2="309" stroke="#394853" stroke-width="2"/>
+  <text x="83" y="362" fill="#E6BA7B" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="600">BLE / GATT</text>
+  <text x="288" y="362" fill="#C0CBCF" font-family="Arial,Helvetica,sans-serif" font-size="18">FAST PAIR</text>
+  <text x="483" y="362" fill="#C0CBCF" font-family="Arial,Helvetica,sans-serif" font-size="18">CLASSIC</text>
+  <text x="654" y="362" fill="#C0CBCF" font-family="Arial,Helvetica,sans-serif" font-size="18">DIAGNÓSTICOS</text>
+  <text x="888" y="362" fill="#C0CBCF" font-family="Arial,Helvetica,sans-serif" font-size="18">HISTÓRICO LOCAL</text>
+</svg>
