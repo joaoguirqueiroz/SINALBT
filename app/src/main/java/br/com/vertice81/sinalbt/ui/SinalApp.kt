@@ -989,7 +989,7 @@ private fun SessionsScreen(
         }
         items(devices, key = { it.key }) { entry ->
             Column {
-                DeviceTile(entry) { onSelect(entry) }
+                DeviceTile(entry, onClick = { onSelect(entry) })
                 if (links[entry.address]?.state == LinkState.CONNECTED) {
                     Text("Conexão BLE ativa", color = Ok, fontSize = 11.sp,
                         modifier = Modifier.padding(start = 10.dp, top = 5.dp))
