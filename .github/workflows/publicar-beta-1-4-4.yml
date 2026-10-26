@@ -30,7 +30,9 @@ jobs:
           set -euo pipefail
           test -s produto/app-debug.apk
           test -s produto/app-debug.apk.sha256
-          (cd produto && sha256sum -c app-debug.apk.sha256)
+          expected="$(awk 'NR==1 { print $1 }' produto/app-debug.apk.sha256)"
+          actual="$(sha256sum produto/app-debug.apk | awk '{ print $1 }')"
+          test "$actual" = "$expected"
           cp produto/app-debug.apk produto/SINAL-BT-v1.4.4-beta.apk
           (cd produto && sha256sum SINAL-BT-v1.4.4-beta.apk > SHA256SUMS.txt)
 
