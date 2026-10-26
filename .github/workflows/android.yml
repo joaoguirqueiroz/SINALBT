@@ -35,7 +35,7 @@ jobs:
         env:
           SINAL_VERSION_NAME: 1.4.${{ github.run_number }}
         run: |
-          gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+          gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
           test -s app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/app-debug.apk.sha256
       - name: Publicar APK de teste em Artifacts
@@ -47,6 +47,20 @@ jobs:
             app/build/outputs/apk/debug/app-debug.apk.sha256
           retention-days: 30
           if-no-files-found: error
+      - name: Android Lint - verificar permissoes e seguranca
+        run: gradle --no-daemon :app:lintDebug
+
+      - name: Salvar relatorio de Lint, inclusive em falhas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SINAL-BT-lint-report
+          path: |
+            app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+            app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Verificar assinatura permanente
         env:
           KEYSTORE_B64: ${{ secrets.SINAL_SIGNING_KEYSTORE_B64 }}
