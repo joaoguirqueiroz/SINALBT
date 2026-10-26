@@ -11,6 +11,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,6 +36,14 @@ import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Bluetooth
 import androidx.compose.material.icons.outlined.BluetoothConnected
 import androidx.compose.material.icons.outlined.BluetoothSearching
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.Speaker
+import androidx.compose.material.icons.outlined.Watch
+import androidx.compose.material.icons.outlined.Laptop
+import androidx.compose.material.icons.outlined.Smartphone
+import androidx.compose.material.icons.outlined.DirectionsCar
+import androidx.compose.material.icons.outlined.Sensors
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.DeleteOutline
@@ -100,6 +110,8 @@ import br.com.vertice81.sinalbt.bluetooth.EventStore
 import br.com.vertice81.sinalbt.model.AudioProfileInfo
 import br.com.vertice81.sinalbt.model.BluetoothDiagnostics
 import br.com.vertice81.sinalbt.model.DeviceEntry
+import br.com.vertice81.sinalbt.model.DeviceClassifier
+import br.com.vertice81.sinalbt.media.MediaControlManager
 import br.com.vertice81.sinalbt.model.DeveloperInfo
 import br.com.vertice81.sinalbt.model.EventRecord
 import br.com.vertice81.sinalbt.model.LinkDetail
@@ -114,8 +126,9 @@ import java.util.Date
 import java.util.Locale
 
 private enum class Tab(val label: String, val icon: ImageVector) {
-    SCAN("Buscar", Icons.Outlined.BluetoothSearching),
-    SESSIONS("Meus", Icons.Outlined.Devices),
+    SCAN("Scanner", Icons.Outlined.Search),
+    DEVICES("Aparelhos", Icons.Outlined.Devices),
+    MEDIA("Mídia", Icons.Outlined.MusicNote),
     HISTORY("Registros", Icons.Outlined.History),
     ABOUT("Sobre", Icons.Outlined.Info)
 }
@@ -123,6 +136,7 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 @Composable
 fun SinalApp(
     controller: BluetoothController,
+    mediaControl: MediaControlManager,
     updater: GithubUpdateManager,
     events: EventStore,
     exportMessage: String?,
@@ -184,6 +198,7 @@ fun SinalApp(
                 entry = current,
                 link = controller.links[current.address],
                 audio = controller.audioProfiles[current.address],
+                mediaControl = mediaControl,
                 systemNotice = controller.notice,
                 onBack = { selectedKey = null },
                 onConnect = { requestConnect(current) },
@@ -196,8 +211,9 @@ fun SinalApp(
                 modifier = Modifier.padding(inner)
             )
             tab == Tab.SCAN -> ExplorerScreen(
-                devices = controller.devices.filter { it.discovered }
-                    .sortedWith(compareByDescending<DeviceEntry> { it.rssi != null }.thenByDescending { it.rssi ?: -999 }),
+                devices = controller.devices.toList(),
+                connectedAddresses = controller.links.filterValues { it.state == LinkState.CONNECTED }.keys +
+                    controller.audioProfiles.filterValues { it.anyConnected }.keys,
                 scanning = controller.scanning,
                 notice = controller.notice,
                 mode = mode,
@@ -208,7 +224,7 @@ fun SinalApp(
                 onSelect = { selectedKey = it.key },
                 modifier = Modifier.padding(inner)
             )
-            tab == Tab.SESSIONS -> SessionsScreen(
+            tab == Tab.DEVICES -> SessionsScreen(
                 devices = controller.devices.filter {
                     it.bondState == BluetoothDevice.BOND_BONDED || controller.links[it.address]?.state in
                         listOf(LinkState.CONNECTED, LinkState.DISCOVERING, LinkState.CONNECTING)
@@ -217,6 +233,11 @@ fun SinalApp(
                 onRefresh = requestRefresh,
                 onSelect = { selectedKey = it.key },
                 onSettings = openBluetoothSettings,
+                modifier = Modifier.padding(inner)
+            )
+            tab == Tab.MEDIA -> MediaScreen(
+                media = mediaControl,
+                openBluetoothSettings = openBluetoothSettings,
                 modifier = Modifier.padding(inner)
             )
             tab == Tab.HISTORY -> HistoryScreen(
@@ -244,7 +265,7 @@ private fun BrandHeader(subtitle: String) {
             Text(subtitle, color = TextMuted, fontSize = 11.sp,
                 lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
-        Icon(Icons.Outlined.Security, null, tint = Accent, modifier = Modifier.size(22.dp))
+        Tag("ROOTSCOPE", Accent, Elevated)
     }
 }
 
@@ -367,6 +388,7 @@ private fun ResponsiveActionPair(
 @Composable
 private fun ExplorerScreen(
     devices: List<DeviceEntry>,
+    connectedAddresses: Set<String>,
     scanning: Boolean,
     notice: String,
     mode: ScanMode,
@@ -379,13 +401,28 @@ private fun ExplorerScreen(
 ) {
     var query by remember { mutableStateOf("") }
     var nameSort by remember { mutableStateOf(false) }
+    var filter by remember { mutableStateOf("Todos") }
     val visible = devices.filter { entry ->
-        query.isBlank() || entry.name.contains(query.trim(), ignoreCase = true) ||
-            entry.address.contains(query.trim(), ignoreCase = true) ||
-            (entry.modelId?.contains(query.trim(), ignoreCase = true) == true)
+        val q = query.trim()
+        val uuids = entry.serviceUuids + entry.classicServiceUuids
+        val kind = DeviceClassifier.identify(entry.name, uuids).label
+        val fields = listOf(entry.name, entry.address, kind, entry.transportLabel, entry.modelId.orEmpty(),
+            uuids.joinToString(" "), entry.manufacturerIds.joinToString(" ") { id ->
+                "0x${id.toString(16)} ${BluetoothDiagnostics.companyName(id).orEmpty()}"
+            })
+        val matches = q.isEmpty() || fields.any { it.contains(q, ignoreCase = true) }
+        val filtered = when (filter) {
+            "Fast Pair" -> entry.isFastPair
+            "Áudio" -> DeviceClassifier.isAudioCandidate(entry.name, uuids)
+            "Pareados" -> entry.bondState == BluetoothDevice.BOND_BONDED
+            "Conectados" -> entry.address in connectedAddresses
+            else -> true
+        }
+        matches && filtered
     }.let { list ->
         if (nameSort) list.sortedBy { it.name.lowercase(Locale.ROOT) }
-        else list.sortedWith(compareByDescending<DeviceEntry> { it.rssi != null }.thenByDescending { it.rssi ?: -999 })
+        else list.sortedWith(compareByDescending<DeviceEntry> { it.rssi != null }
+            .thenByDescending { it.rssi ?: -999 }.thenBy { it.name })
     }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -394,7 +431,7 @@ private fun ExplorerScreen(
     ) {
         item { BrandHeader("Laboratório de segurança Bluetooth") }
         item {
-            Headline("Explore o sinal.", "Localize caixas, fones e periféricos. Veja o que cada conexão realmente permite.")
+            Headline("Encontre. Analise. Conecte.", "Scanner BLE e Classic com identificação técnica, sinal e conexões autorizadas.")
         }
         item {
             SectionBox {
@@ -407,7 +444,7 @@ private fun ExplorerScreen(
                         fontWeight = FontWeight.Bold, color = if (scanning) Ok else TextMuted,
                         letterSpacing = 0.8.sp)
                     Spacer(Modifier.weight(1f))
-                    Tag("${devices.size} encontrados", TextStrong)
+                    Tag("${devices.size} registros", TextStrong)
                 }
                 Spacer(Modifier.height(13.dp))
                 Text(notice, color = TextMuted, fontSize = 12.sp, lineHeight = 18.sp)
@@ -447,9 +484,9 @@ private fun ExplorerScreen(
             Row(verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(top = 11.dp, bottom = 3.dp)) {
                 Column(Modifier.weight(1f)) {
-                    Eyebrow("Descoberta")
+                    Eyebrow("Exploração Bluetooth")
                     Spacer(Modifier.height(4.dp))
-                    Text("Dispositivos próximos", fontWeight = FontWeight.SemiBold,
+                    Text("Dispositivos detectados", fontWeight = FontWeight.SemiBold,
                         color = TextStrong, fontSize = 17.sp)
                 }
                 if (devices.isNotEmpty()) {
@@ -466,15 +503,32 @@ private fun ExplorerScreen(
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it.take(80) },
-                    placeholder = { Text("Nome, endereço ou Model ID", fontSize = 13.sp) },
+                    placeholder = { Text("Nome, MAC, categoria, fabricante ou UUID", fontSize = 12.sp) },
                     singleLine = true,
-                    leadingIcon = { Icon(Icons.Outlined.BluetoothSearching, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Accent, unfocusedBorderColor = Outline,
                         focusedTextColor = TextStrong, unfocusedTextColor = TextStrong
                     )
                 )
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    listOf("Todos", "Fast Pair", "Áudio", "Pareados", "Conectados").forEach { label ->
+                        Box(
+                            modifier = Modifier.background(if (filter == label) Accent else Elevated,
+                                RoundedCornerShape(8.dp))
+                                .clickable { filter = label }
+                                .padding(horizontal = 12.dp, vertical = 9.dp)
+                        ) {
+                            Text(label, color = if (filter == label) AccentInk else TextMuted,
+                                fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
                 Spacer(Modifier.height(7.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Ordenar por nome", color = TextMuted, fontSize = 12.sp,
@@ -502,7 +556,9 @@ private fun ExplorerScreen(
                 }
             }
         } else {
-            items(visible, key = { it.key }) { device -> DeviceTile(device, onClick = { onSelect(device) }) }
+            items(visible, key = { it.key }) { device ->
+                DeviceTile(device, onClick = { onSelect(device) }, connected = device.address in connectedAddresses)
+            }
         }
         item {
             Text("RSSI não mede distância exata. Um dispositivo conectado a outro celular pode não estar detectável. O app não identifica o dono da conexão.",
@@ -513,7 +569,18 @@ private fun ExplorerScreen(
 }
 
 @Composable
-private fun DeviceTile(entry: DeviceEntry, onClick: () -> Unit) {
+private fun DeviceTile(entry: DeviceEntry, onClick: () -> Unit, connected: Boolean = false) {
+    val kind = DeviceClassifier.identify(entry.name, entry.serviceUuids + entry.classicServiceUuids)
+    val deviceIcon = when (kind) {
+        DeviceClassifier.Kind.SPEAKER -> Icons.Outlined.Speaker
+        DeviceClassifier.Kind.EARBUDS, DeviceClassifier.Kind.HEADSET -> Icons.Outlined.Headphones
+        DeviceClassifier.Kind.WATCH -> Icons.Outlined.Watch
+        DeviceClassifier.Kind.COMPUTER -> Icons.Outlined.Laptop
+        DeviceClassifier.Kind.PHONE -> Icons.Outlined.Smartphone
+        DeviceClassifier.Kind.VEHICLE -> Icons.Outlined.DirectionsCar
+        DeviceClassifier.Kind.SENSOR -> Icons.Outlined.Sensors
+        else -> Icons.Outlined.Bluetooth
+    }
     Column(
         modifier = Modifier.fillMaxWidth()
             .background(Surface, RoundedCornerShape(14.dp))
@@ -527,16 +594,14 @@ private fun DeviceTile(entry: DeviceEntry, onClick: () -> Unit) {
                 Modifier.size(43.dp).background(Elevated, RoundedCornerShape(11.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(if (entry.seenClassic && !entry.seenBle) Icons.Outlined.Headphones
-                     else Icons.Outlined.Bluetooth,
-                    null, tint = Accent, modifier = Modifier.size(22.dp))
+                Icon(deviceIcon, null, tint = Accent, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(entry.name, color = TextStrong, fontSize = 14.sp,
                     lineHeight = 19.sp, fontWeight = FontWeight.SemiBold,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(entry.address, color = TextMuted, fontSize = 10.sp,
+                Text(kind.label + " · " + entry.address, color = TextMuted, fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -551,6 +616,7 @@ private fun DeviceTile(entry: DeviceEntry, onClick: () -> Unit) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Tag(entry.transportLabel, TextMuted)
                         if (entry.isFastPair) Tag("Fast Pair", Accent)
+                        if (connected) Tag("Conectado", Ok)
                     }
                     Text(if (entry.rssi != null) "RSSI: ${entry.rssi} dBm · ${BluetoothDiagnostics.ageLabel(entry.lastSeen)}" else "RSSI não disponível",
                         color = TextMuted, fontSize = 11.sp)
@@ -560,6 +626,7 @@ private fun DeviceTile(entry: DeviceEntry, onClick: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Tag(entry.transportLabel, TextMuted)
                     if (entry.isFastPair) Tag("Fast Pair", Accent)
+                    if (connected) Tag("Conectado", Ok)
                     Spacer(Modifier.weight(1f))
                     Text(if (entry.rssi != null) "${entry.rssi} dBm" else "RSSI —",
                         color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium,
@@ -575,6 +642,7 @@ private fun DeviceDetail(
     entry: DeviceEntry,
     link: LinkDetail?,
     audio: AudioProfileInfo?,
+    mediaControl: MediaControlManager,
     systemNotice: String,
     onBack: () -> Unit,
     onConnect: () -> Unit,
@@ -657,7 +725,10 @@ private fun DeviceDetail(
         }
         item {
             SectionBox {
-                Eyebrow("Telemetria")
+                Eyebrow("Identificação e telemetria")
+                InformationRow("Categoria sugerida", DeviceClassifier.identify(entry.name,
+                    entry.serviceUuids + entry.classicServiceUuids).label)
+                ThinRule()
                 InformationRow("Transporte detectado", entry.transportLabel)
                 ThinRule()
                 InformationRow("RSSI no anúncio", entry.rssi?.let { "$it dBm" } ?: "Não disponível")
@@ -696,7 +767,7 @@ private fun DeviceDetail(
         }
         item {
             SectionBox {
-                Eyebrow("Áudio neste celular")
+                Eyebrow("Perfis de áudio neste celular")
                 Spacer(Modifier.height(8.dp))
                 Text("O Android só informa perfis de áudio conectados a ESTE celular, não ao telefone de outra pessoa.",
                     fontSize = 12.sp, lineHeight = 18.sp, color = TextMuted)
@@ -722,6 +793,9 @@ private fun DeviceDetail(
                 Text("Para conectar áudio Classic, use o botão Configurações acima.",
                     color = TextDim, fontSize = 11.sp, lineHeight = 16.sp)
             }
+        }
+        if (DeviceClassifier.isAudioCandidate(entry.name, entry.serviceUuids + entry.classicServiceUuids) || audio?.anyConnected == true) {
+            item { MediaControlPanel(media = mediaControl, openBluetoothSettings = onSettings) }
         }
         if (entry.seenClassic || entry.bondState == BluetoothDevice.BOND_BONDED) {
             item {
@@ -1011,7 +1085,7 @@ private fun AboutScreen(updater: GithubUpdateManager, modifier: Modifier = Modif
                     }
                 }
                 Spacer(Modifier.height(14.dp))
-                Text("Identidade visual do SINAL BT e pesquisa RootScope: grafite, detalhes âmbar, tipografia clara e interface sem gradientes.",
+                Text("Design RootScope: superfícies claras, azul-ciano, grafite e componentes técnicos de alta legibilidade.",
                     color = TextMuted, fontSize = 12.sp, lineHeight = 19.sp)
             }
         }
@@ -1053,7 +1127,7 @@ private fun AboutScreen(updater: GithubUpdateManager, modifier: Modifier = Modif
                 Text("Versão instalada: ${BuildConfig.VERSION_NAME}", color = TextStrong,
                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(7.dp))
-                Text("O SINAL BT consulta versões oficiais publicadas no GitHub e pode baixar a atualização sem exigir que você procure um arquivo APK manualmente. O Android confirmará a instalação.",
+                Text("O SINAL BT consulta releases oficiais assinadas no GitHub. As versões beta podem ser baixadas em Releases; atualizar uma beta para outra pode exigir reinstalação por causa da assinatura de teste.",
                     color = TextMuted, fontSize = 12.sp, lineHeight = 18.sp)
                 Spacer(Modifier.height(10.dp))
                 Text(updateState.message.ifBlank { "Clique para verificar se existe uma versão nova." },
@@ -1080,6 +1154,10 @@ private fun AboutScreen(updater: GithubUpdateManager, modifier: Modifier = Modif
                 Spacer(Modifier.height(8.dp))
                 Text("É necessário um repositório público de distribuição e APKs assinados sempre com a mesma chave. O GitHub privado do portal RootScope permanece separado.",
                     color = TextDim, fontSize = 11.sp, lineHeight = 16.sp)
+                Spacer(Modifier.height(10.dp))
+                SecondaryAction("Abrir GitHub Releases", Icons.Outlined.OpenInNew, {
+                    openUrl(ctx, "https://github.com/joaoguirqueiroz/SINALBT/releases")
+                })
             }
         }
         item {
@@ -1091,6 +1169,8 @@ private fun AboutScreen(updater: GithubUpdateManager, modifier: Modifier = Modif
                 FeatureLine(Icons.Outlined.SignalCellularAlt, "Telemetria", "Mostra RSSI, identificação anunciada, serviço e IDs de fabricante.")
                 ThinRule()
                 FeatureLine(Icons.Outlined.Link, "Conexões reais", "Abre sessão BLE/GATT e mostra resultado real; solicita pareamento pelo Android.")
+                ThinRule()
+                FeatureLine(Icons.Outlined.MusicNote, "Mídia local", "Som de teste, player e volume do próprio celular, com saída selecionada pelo Android.")
                 ThinRule()
                 FeatureLine(Icons.Outlined.Security, "Fast Pair / CVE", "Identifica indícios do protocolo e fornece contexto técnico sem exploração.")
                 ThinRule()
@@ -1118,7 +1198,7 @@ private fun AboutScreen(updater: GithubUpdateManager, modifier: Modifier = Modif
             SectionBox {
                 Eyebrow("Privacidade e limites")
                 Spacer(Modifier.height(9.dp))
-                Text("• Sem permissão de microfone, gravação ou acesso ao áudio.\n• Sem acesso à internet no próprio aplicativo.\n• Sem rastreamento por localização ou telemetria remota.\n• Bluetooth Classic e BLE podem usar endereços diferentes.\n• Nem toda caixa oferece GATT; áudio depende do sistema e dos perfis de conexão.\n• Só faça testes nos aparelhos que controla.",
+                Text("• Sem permissão de microfone ou gravação. Som de teste gerado localmente.\n• Internet apenas para atualizações e links abertos por você.\n• Sem envio remoto do histórico de buscas.\n• Bluetooth Classic e BLE podem usar endereços diferentes.\n• Nem toda caixa oferece GATT; áudio depende do sistema e dos perfis de conexão.\n• Só faça testes nos aparelhos que controla.",
                     color = TextMuted, fontSize = 12.sp, lineHeight = 21.sp)
             }
         }

@@ -14,8 +14,8 @@ android {
         targetSdk = 35
         // O GitHub Actions incrementa o versionCode e publica uma versão nova a cada envio.
         // Localmente, o projeto mantém uma versão estável para desenvolvimento.
-        versionCode = 14000 + (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0)
-        versionName = System.getenv("SINAL_VERSION_NAME") ?: "1.4.0"
+        versionCode = 15000 + (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0)
+        versionName = System.getenv("SINAL_VERSION_NAME") ?: "1.5.0"
         buildConfigField("String", "UPDATES_REPO", "\"joaoguirqueiroz/SINALBT\"")
     }
 

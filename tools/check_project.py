@@ -68,8 +68,8 @@ if ui.exists():
         check(name in content, f'Tela/função não encontrada: {name}')
 
 build = (root / 'app/build.gradle.kts').read_text()
-check('SINAL_VERSION_NAME' in build and '1.4.0' in build, 'Versão automática não configurada')
-check('GITHUB_RUN_NUMBER' in build and '14000' in build, 'VersionCode progressivo não configurado')
+check('SINAL_VERSION_NAME' in build and '1.5.0' in build, 'Versão automática não configurada')
+check('GITHUB_RUN_NUMBER' in build and '15000' in build, 'VersionCode progressivo não configurado')
 
 about_info = (root / 'app/src/main/java/br/com/vertice81/sinalbt/model/DeveloperInfo.kt').read_text()
 check('https://www.instagram.com/rootscope.br/' in about_info, 'URL do Instagram incorreta')

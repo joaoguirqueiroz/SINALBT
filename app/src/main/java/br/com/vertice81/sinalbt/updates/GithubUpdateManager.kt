@@ -75,7 +75,7 @@ class GithubUpdateManager(private val activity: Activity) {
                     setRequestProperty("User-Agent", "SINAL-BT-Android/${BuildConfig.VERSION_NAME}")
                 }
                 val code = conn.responseCode
-                if (code == 404) throw IllegalStateException("O repositório público de atualizações ou a primeira versão oficial ainda não existe.")
+                if (code == 404) throw IllegalStateException("A primeira versão oficial assinada ainda não existe. As betas estão disponíveis na aba GitHub Releases; poderão exigir reinstalação.")
                 if (code != 200) throw IllegalStateException("Resposta do GitHub: HTTP $code")
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
                 val obj = JSONObject(body)

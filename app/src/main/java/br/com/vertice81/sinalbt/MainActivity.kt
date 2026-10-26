@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import br.com.vertice81.sinalbt.bluetooth.BluetoothController
 import br.com.vertice81.sinalbt.bluetooth.EventStore
+import br.com.vertice81.sinalbt.media.MediaControlManager
 import br.com.vertice81.sinalbt.ui.SinalApp
 import br.com.vertice81.sinalbt.ui.SinalTheme
 import br.com.vertice81.sinalbt.updates.GithubUpdateManager
@@ -23,6 +24,7 @@ import br.com.vertice81.sinalbt.updates.GithubUpdateManager
 class MainActivity : ComponentActivity() {
     private lateinit var events: EventStore
     private lateinit var controller: BluetoothController
+    private lateinit var mediaControl: MediaControlManager
     private lateinit var updater: GithubUpdateManager
     private var exportMessage by mutableStateOf<String?>(null)
 
@@ -30,6 +32,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         events = EventStore(this)
         controller = BluetoothController(this, events)
+        mediaControl = MediaControlManager(this)
         updater = GithubUpdateManager(this)
 
         setContent {
@@ -108,6 +111,7 @@ class MainActivity : ComponentActivity() {
 
                 SinalApp(
                     controller = controller,
+                    mediaControl = mediaControl,
                     updater = updater,
                     events = events,
                     exportMessage = exportMessage,
@@ -129,6 +133,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (::controller.isInitialized) controller.refreshBonded()
+        if (::mediaControl.isInitialized) mediaControl.refresh()
         if (::updater.isInitialized) updater.checkIfDue()
     }
 

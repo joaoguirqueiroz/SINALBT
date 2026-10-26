@@ -33,7 +33,7 @@ jobs:
         run: python3 tools/check_project.py
       - name: Testar e compilar APK de desenvolvimento
         env:
-          SINAL_VERSION_NAME: 1.4.${{ github.run_number }}
+          SINAL_VERSION_NAME: 1.5.${{ github.run_number }}
         run: |
           gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
           test -s app/build/outputs/apk/debug/app-debug.apk
@@ -41,7 +41,7 @@ jobs:
       - name: Publicar APK de teste em Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: SINAL-BT-v1.4.${{ github.run_number }}-debug
+          name: SINAL-BT-v1.5.${{ github.run_number }}-debug
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             app/build/outputs/apk/debug/app-debug.apk.sha256
@@ -89,19 +89,19 @@ jobs:
           SINAL_SIGNING_STORE_PASSWORD: ${{ secrets.SINAL_SIGNING_STORE_PASSWORD }}
           SINAL_SIGNING_KEY_ALIAS: ${{ secrets.SINAL_SIGNING_KEY_ALIAS }}
           SINAL_SIGNING_KEY_PASSWORD: ${{ secrets.SINAL_SIGNING_KEY_PASSWORD }}
-          SINAL_VERSION_NAME: 1.4.${{ github.run_number }}
+          SINAL_VERSION_NAME: 1.5.${{ github.run_number }}
         run: |
           gradle --no-daemon --stacktrace :app:assembleRelease
           test -s app/build/outputs/apk/release/app-release.apk
           mkdir -p distribution
-          cp app/build/outputs/apk/release/app-release.apk "distribution/SINAL-BT-v1.4.${{ github.run_number }}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "distribution/SINAL-BT-v1.5.${{ github.run_number }}.apk"
           (cd distribution && sha256sum *.apk > SHA256SUMS.txt)
       - name: Criar GitHub Release
         if: env.SIGNING_READY == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v1.4.${{ github.run_number }}" distribution/*.apk distribution/SHA256SUMS.txt --repo "${{ github.repository }}" --title "SINAL BT v1.4.${{ github.run_number }}" --notes "Aplicativo RootScope. Atualizacao assinada pelo GitHub. Uso educacional e autorizado." --target "${{ github.sha }}" --latest
+          gh release create "v1.5.${{ github.run_number }}" distribution/*.apk distribution/SHA256SUMS.txt --repo "${{ github.repository }}" --title "SINAL BT v1.5.${{ github.run_number }}" --notes "Aplicativo RootScope. Atualizacao assinada pelo GitHub. Uso educacional e autorizado." --target "${{ github.sha }}" --latest
 
       - name: Publicar GitHub Release beta instalavel
         if: env.SIGNING_READY != 'true'
@@ -110,9 +110,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p distribution-beta
-          cp app/build/outputs/apk/debug/app-debug.apk "distribution-beta/SINAL-BT-v1.4.${{ github.run_number }}-beta.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "distribution-beta/SINAL-BT-v1.5.${{ github.run_number }}-beta.apk"
           (cd distribution-beta && sha256sum *.apk > SHA256SUMS.txt)
-          gh release create "v1.4.${{ github.run_number }}-beta" distribution-beta/*.apk distribution-beta/SHA256SUMS.txt \
-            --repo "${{ github.repository }}" --title "SINAL BT v1.4.${{ github.run_number }} - Beta" \
+          gh release create "v1.5.${{ github.run_number }}-beta" distribution-beta/*.apk distribution-beta/SHA256SUMS.txt \
+            --repo "${{ github.repository }}" --title "SINAL BT v1.5.${{ github.run_number }} - Beta" \
             --notes "BUILD BETA DE TESTES. O aplicativo Android foi compilado e passou nos testes e Android Lint. Este APK usa a assinatura debug do GitHub Actions, que pode variar entre builds: nao espere atualizar por cima de outras betas ou da futura versao oficial. Para atualizar sem reinstalacao, configure os secrets de assinatura permanente conforme o README. Uso educacional e autorizado; sem exploracao ativa da CVE-2025-36911." \
             --prerelease --target "${{ github.sha }}"

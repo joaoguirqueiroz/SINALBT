@@ -1,49 +1,42 @@
-# SINAL BT — RootScope
+# SINAL BT — scanner Bluetooth e controle local de mídia
 
-**Scanner e diagnóstico Bluetooth para Android**, desenvolvido em Kotlin/Jetpack Compose, com suporte BLE, Bluetooth Classic, conexões GATT autorizadas, inspeção de serviços, identificação de anúncios Google Fast Pair e histórico exportável.
+Projeto Android nativo Kotlin / Jetpack Compose mantido por **João Guilherme — RootScope**.
 
-**Desenvolvedor:** João Guilherme · RootScope · [@rootscope.br](https://www.instagram.com/rootscope.br/)
+Instagram: https://www.instagram.com/rootscope.br/
 
-> O aplicativo não explora a CVE-2025-36911, não captura áudio e não força o pareamento de terceiros. Conexões GATT não equivalem ao áudio Bluetooth Classic. O aplicativo verifica condições técnicas, não comprova vulnerabilidades sem teste especializado.
+## Recursos
 
-## Primeira instalação — já disponível para testes
+- Scanner BLE/Classic, leitura RSSI, serviços, UUIDs e sinais Fast Pair.
+- Pesquisa e filtros por nome, MAC, tipo sugerido, UUID, pareamentos e conexões locais.
+- Conexão BLE/GATT real e pareamento pelo Android, com estados de erro e tempo limite.
+- Consulta de perfis de áudio deste celular (A2DP/HFP).
+- Painel de mídia com controles do player local, volume e um som curto de teste enviado ao dispositivo de saída selecionado no Android.
+- Histórico e exportação JSON.
+- Análise não invasiva relacionada à CVE-2025-36911 (WhisperPair).
 
-O pacote de entrega fornecido separadamente contém `SINAL_BT_v1.3.0_beta_instalavel.apk`, compilado por GitHub Actions e validado por SHA-256. Esta versão de depuração **não tem a assinatura permanente de produção**. É adequada a testes iniciais, mas exige reinstalação ao migrar para a versão oficial assinada.
+**Limite:** o aplicativo não força pareamento de terceiros, não recebe nem grava microfones, não garante que dispositivos em uso por outro celular aceitem outra conexão e não comprova uma CVE apenas pela presença de Fast Pair.
 
-## GitHub: instalar e receber versões sem gerenciar APK manualmente
+## Como usar
 
-1. Use o repositório **público** existente `joaoguirqueiroz/SINALBT` (o repositório do site `rootscope` deve continuar privado).
-2. Envie o **conteúdo desta pasta** para a raiz do repositório, preservando `.github/workflows/android.yml`.
-3. A cada push na branch `main`, o GitHub Actions compila, testa e publica um **APK de teste** em `Actions → Artifacts`.
-4. Uma única vez, no seu computador com JDK e GitHub CLI, execute `powershell -ExecutionPolicy Bypass -File tools/CONFIGURAR_ASSINATURA_WINDOWS.ps1`. A ferramenta gera/guarda localmente a chave e envia ao repositório **apenas os GitHub Actions Secrets** necessários. Nunca publique a chave no repositório.
-5. Depois da configuração, cada push na branch `main` publica também uma **Release oficial assinada**, com versão numerada automaticamente (`v1.4.1`, `v1.4.2`, etc.).
-6. No SINAL BT, abra **Sobre → Atualizações oficiais pelo GitHub**; toque **Procurar atualizações** e **Baixar** quando necessário. O Android pedirá autorização antes de instalar; não há instalação silenciosa fora dos mecanismos autorizados.
+1. Instale a versão beta no Android 8.0 ou superior.
+2. Ative o Bluetooth e conceda as permissões solicitadas.
+3. Em **Scanner**, selecione BLE, Classic ou Ambos e execute uma busca.
+4. Selecione um dispositivo para conferir nome anunciado, MAC, categoria sugerida, RSSI, dados de fabricante e serviços.
+5. Quando houver BLE, use **Conectar por BLE/GATT**. Para Classic/A2DP, conclua o pareamento e selecione a saída nas **Configurações Bluetooth do Android**.
+6. Em **Mídia**, confira saídas disponíveis, ajuste volume, teste o som e envie comandos à sessão de mídia do próprio celular.
+7. Exporte o histórico na aba **Registros**.
 
-O **download inicial** da versão oficial será encontrado em [`Releases`](https://github.com/joaoguirqueiroz/SINALBT/releases) quando o repositório e a primeira publicação existirem. Também é possível usar o [Obtainium](https://obtainium.imranr.dev/) para acompanhar futuras versões.
+O botão **Reproduzir som de teste** gera um sinal de 660 Hz por cerca de 0,75 segundos. Sem saída Bluetooth selecionada, o áudio poderá sair pelo alto-falante do celular. Use volume moderado.
 
-## Guias completos
+## Desenvolvimento
 
-- [PRIMEIROS_PASSOS.md](PRIMEIROS_PASSOS.md) — passo a passo da primeira publicação.
-- [INSTALAR_APK.md](INSTALAR_APK.md) — instalação inicial e permissões Android.
-- [ATUALIZACOES_GITHUB.md](ATUALIZACOES_GITHUB.md) — regras de versão, assinatura e atualização.
-- [GUIA_DO_DESENVOLVEDOR.md](GUIA_DO_DESENVOLVEDOR.md) — fluxo de trabalho e correções.
-- [docs/ESCOPO_DE_SEGURANCA.md](docs/ESCOPO_DE_SEGURANCA.md) — limitações éticas e técnicas.
+- JDK 17, Android SDK 35 e Gradle 8.9.
+- Compilar: `gradle :app:assembleDebug`.
+- Testes: `gradle :app:testDebugUnitTest :app:lintDebug`.
+- CI: `.github/workflows/android.yml`.
+- Distribuição beta: [Releases](https://github.com/joaoguirqueiroz/SINALBT/releases).
+- Releases oficiais para atualizações in-place exigem a configuração única e segura dos segredos de assinatura Android descritos em `PRIMEIROS_PASSOS.md`.
 
-## Arquitetura
+## Crédito e segurança
 
-`app/src/main/java/br/com/vertice81/sinalbt/` contém `MainActivity`, `bluetooth/BluetoothController`, `model`, `ui` e `updates/GithubUpdateManager`.
-
-- **Android mínimo:** 8.0 (API 26)
-- **Android SDK:** 35
-- **Java/JDK:** 17
-- **Gradle:** 8.9
-- **Identificador:** `br.com.vertice81.sinalbt`
-- **Repositório de atualizações:** `joaoguirqueiroz/SINALBT`
-
-## Verificações
-
-`python3 tools/check_project.py` valida arquivos, recursos XML, permissões e fluxos esperados. O workflow executa os testes unitários, Android Lint e a compilação. Passar nos testes automatizados não garante funcionamento em todo aparelho Bluetooth; é necessária validação física em diferentes modelos e versões do Android.
-
-## Código original e créditos
-
-Este é um projeto autoral RootScope de diagnóstico, com pesquisa inspirada em estudos públicos sobre Fast Pair e WhisperPair. Não é uma implementação da exploração ativa do projeto ZWhisper. A licença Apache 2.0 e os avisos de atribuição estão em `LICENSE` e `NOTICE.md`.
+Pesquisa e desenvolvimento RootScope — João Guilherme. Projeto inspirado em informações públicas sobre Bluetooth, Google Fast Pair e CVE-2025-36911; não integra a exploração ativa do ZWhisper.
