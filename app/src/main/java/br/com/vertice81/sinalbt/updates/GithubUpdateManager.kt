@@ -66,7 +66,9 @@ class GithubUpdateManager(private val activity: Activity) {
         thread(name = "sinal-github-releases") {
             var conn: HttpURLConnection? = null
             try {
-                val url = URL("https://api.github.com/repos/$repo/releases/latest")
+                // A API /releases/latest ignora prereleases. Enquanto o app só
+                // possui betas, consultar a coleção evita falsos erros 404.
+                val url = URL("https://api.github.com/repos/$repo/releases?per_page=25")
                 conn = (url.openConnection() as HttpURLConnection).apply {
                     connectTimeout = 12000
                     readTimeout = 12000
@@ -75,20 +77,41 @@ class GithubUpdateManager(private val activity: Activity) {
                     setRequestProperty("User-Agent", "SINAL-BT-Android/${BuildConfig.VERSION_NAME}")
                 }
                 val code = conn.responseCode
-                if (code == 404) throw IllegalStateException("A primeira versão oficial assinada ainda não existe. As betas estão disponíveis na aba GitHub Releases; poderão exigir reinstalação.")
-                if (code != 200) throw IllegalStateException("Resposta do GitHub: HTTP $code")
+                if (code != 200) throw IllegalStateException("GitHub não respondeu à consulta (HTTP $code).")
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
-                val obj = JSONObject(body)
-                val tag = obj.optString("tag_name").removePrefix("v")
+                val releases = org.json.JSONArray(body)
+                var obj: JSONObject? = null
+                for (i in 0 until releases.length()) {
+                    val candidate = releases.optJSONObject(i) ?: continue
+                    if (candidate.optBoolean("draft", true)) continue
+                    if (candidate.optJSONArray("assets") == null) continue
+                    val candidateVersion = candidate.optString("tag_name").removePrefix("v")
+                    if (compareVersions(candidateVersion, BuildConfig.VERSION_NAME) == null) continue
+                    val existing = obj
+                    if (existing == null) {
+                        obj = candidate
+                    } else {
+                        val compared = compareVersions(candidateVersion, existing.optString("tag_name").removePrefix("v")) ?: -1
+                        val currentBeta = existing.optString("tag_name").endsWith("-beta", ignoreCase = true)
+                        val candidateStable = !candidate.optString("tag_name").endsWith("-beta", ignoreCase = true)
+                        if (compared > 0 || (compared == 0 && currentBeta && candidateStable)) {
+                            obj = candidate
+                        }
+                    }
+                }
+                val selected = obj ?: throw IllegalStateException(
+                    "Nenhuma versão Android pública disponível. Veja a aba Releases no GitHub."
+                )
+                val tag = selected.optString("tag_name").removePrefix("v")
                 val comparison = compareVersions(tag, BuildConfig.VERSION_NAME)
-                    ?: throw IllegalStateException("Versão publicada inválida: $tag")
+                    ?: throw IllegalStateException("A publicação não possui versão válida: $tag")
                 prefs.edit().putLong("last_check", System.currentTimeMillis()).apply()
                 if (comparison <= 0) {
                     available = null
-                    ui.post { state = State(Phase.CURRENT, "Você já utiliza a versão mais recente (${BuildConfig.VERSION_NAME}).") }
+                    ui.post { state = State(Phase.CURRENT, "Você já está na versão ${BuildConfig.VERSION_NAME}. Confira as betas no GitHub Releases.") }
                     return@thread
                 }
-                val assets = obj.getJSONArray("assets")
+                val assets = selected.getJSONArray("assets")
                 var found: Release? = null
                 for (i in 0 until assets.length()) {
                     val asset = assets.getJSONObject(i)
@@ -99,7 +122,7 @@ class GithubUpdateManager(private val activity: Activity) {
                     val validLocation = uri.scheme == "https" && uri.host.equals("github.com", true) &&
                         path.size == 6 && path[0].equals("joaoguirqueiroz", true) &&
                         path[1].equals("SINALBT", true) && path[2] == "releases" &&
-                        path[3] == "download" && path[4] == obj.optString("tag_name")
+                        path[3] == "download" && path[4] == selected.optString("tag_name")
                     if (name.startsWith("SINAL-BT-") && name.endsWith(".apk", true) &&
                         validLocation && asset.optLong("size") > 100_000L) {
                         val digest = asset.optString("digest")
@@ -110,7 +133,12 @@ class GithubUpdateManager(private val activity: Activity) {
                 }
                 if (found == null) throw IllegalStateException("A versão publicada não contém um APK oficial do SINAL BT.")
                 available = found
-                ui.post { state = State(Phase.AVAILABLE, "Versão ${found.version} disponível para atualização.", found.version) }
+                ui.post {
+                    val betaNotice = if (found.version.endsWith("-beta", true))
+                        " Beta de teste: a assinatura pode impedir atualização direta. Faça backup do histórico antes de reinstalar."
+                    else ""
+                    state = State(Phase.AVAILABLE, "Versão ${found.version} encontrada no GitHub.${betaNotice}", found.version)
+                }
             } catch (ex: Exception) {
                 ui.post { state = State(Phase.ERROR, ex.message ?: "Falha ao consultar as atualizações.") }
             } finally {
@@ -195,7 +223,12 @@ class GithubUpdateManager(private val activity: Activity) {
                     manager.remove(id)
                     throw IllegalStateException("Verificação SHA-256 falhou. O arquivo foi descartado.")
                 }
-                ui.post { state = State(Phase.READY, "Atualização validada e pronta para instalar.", version) }
+                ui.post {
+                    val betaWarning = if (version?.endsWith("-beta", true) == true)
+                        " Se o Android recusar por assinatura diferente, exporte o histórico e desinstale a beta anterior."
+                    else ""
+                    state = State(Phase.READY, "Arquivo verificado.${betaWarning}", version)
+                }
             } catch (ex: Exception) {
                 ui.post {
                     clearDownload()
@@ -235,7 +268,7 @@ class GithubUpdateManager(private val activity: Activity) {
     companion object {
         /** Somente números de versões estritas vMAJOR.MINOR.PATCH são aceitos. */
         fun compareVersions(remote: String, current: String): Int? {
-            val p = Regex("^(?:v)?(\\d+)\\.(\\d+)\\.(\\d+)$")
+            val p = Regex("^(?:v)?(\\d+)\\.(\\d+)\\.(\\d+)(?:-beta)?$", RegexOption.IGNORE_CASE)
             val a = p.matchEntire(remote)?.groupValues?.drop(1)?.map { it.toIntOrNull() ?: return null } ?: return null
             val b = p.matchEntire(current)?.groupValues?.drop(1)?.map { it.toIntOrNull() ?: return null } ?: return null
             for (i in 0..2) if (a[i] != b[i]) return a[i].compareTo(b[i])

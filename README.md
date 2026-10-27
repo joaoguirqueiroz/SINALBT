@@ -16,6 +16,12 @@ Instagram: https://www.instagram.com/rootscope.br/
 
 **Limite:** o aplicativo não força pareamento de terceiros, não recebe nem grava microfones, não garante que dispositivos em uso por outro celular aceitem outra conexão e não comprova uma CVE apenas pela presença de Fast Pair.
 
+## Instalação rápida e solução de erros
+
+Use a página [GitHub Releases](https://github.com/joaoguirqueiroz/SINALBT/releases) para baixar o APK beta mais recente. No Android, prefira abrir pelo Chrome e baixar em **Assets**.
+
+Se aparecer **“App não instalado”**, uma beta anterior pode ter assinatura diferente. Exporte primeiro seus relatórios, desinstale a versão antiga e instale o APK novo. Veja o [guia completo de instalação](INSTALAR_APK.md).
+
 ## Como usar
 
 1. Instale a versão beta no Android 8.0 ou superior.

@@ -37,6 +37,10 @@ jobs:
         run: |
           gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
           test -s app/build/outputs/apk/debug/app-debug.apk
+          unzip -tq app/build/outputs/apk/debug/app-debug.apk
+          APK_SIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -name apksigner -type f | sort -V | tail -1)"
+          test -n "$APK_SIGNER"
+          "$APK_SIGNER" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/app-debug.apk.sha256
       - name: Publicar APK de teste em Artifacts
         uses: actions/upload-artifact@v4
@@ -114,5 +118,5 @@ jobs:
           (cd distribution-beta && sha256sum *.apk > SHA256SUMS.txt)
           gh release create "v1.5.${{ github.run_number }}-beta" distribution-beta/*.apk distribution-beta/SHA256SUMS.txt \
             --repo "${{ github.repository }}" --title "SINAL BT v1.5.${{ github.run_number }} - Beta" \
-            --notes "BUILD BETA DE TESTES. O aplicativo Android foi compilado e passou nos testes e Android Lint. Este APK usa a assinatura debug do GitHub Actions, que pode variar entre builds: nao espere atualizar por cima de outras betas ou da futura versao oficial. Para atualizar sem reinstalacao, configure os secrets de assinatura permanente conforme o README. Uso educacional e autorizado; sem exploracao ativa da CVE-2025-36911." \
+            --notes "SINAL BT ROOTSCOPE - BETA. Android 8 ou superior. TOQUE EM ASSETS E BAIXE O ARQUIVO .APK. Use o navegador Chrome caso o app GitHub nao inicie o download. Para instalar: abra Downloads, toque no arquivo, autorize 'Instalar apps desconhecidos' para seu navegador ou gerenciador. IMPORTANTE: se aparecer 'App nao instalado' e voce ja tiver SINAL BT, a assinatura debug das betas pode ter mudado. Abra a beta antiga, exporte o historico JSON e DESINSTALE a versao anterior antes de instalar esta. Os APKs sao verificados por apksigner, Gradle, testes e Android Lint. As versoes definitivas ainda exigem assinatura permanente. Uso educacional e autorizado; sem exploracao ativa da CVE-2025-36911." \
             --prerelease --target "${{ github.sha }}"

@@ -1,13 +1,43 @@
-# Instalação do SINAL BT no Android
+# SINAL BT — instalação pelo GitHub Releases
 
-## Beta de testes — pronta agora
+**Desenvolvedor:** João Guilherme / RootScope · Instagram: @rootscope.br.
 
-O pacote de entrega possui `SINAL_BT_v1.3.0_beta_instalavel.apk`, compilado pelo GitHub Actions e validado por SHA-256. Transfira ao telefone, abra e permita a instalação pelo aplicativo de arquivos quando o Android solicitar. Essa compilação **não foi testada fisicamente** e foi assinada com chave debug.
+## Baixe sempre a versão mais nova
 
-## Versão oficial atualizável
+Página oficial: https://github.com/joaoguirqueiroz/SINALBT/releases
 
-Crie o repositório público, envie o projeto e configure a assinatura conforme [PRIMEIROS_PASSOS.md](PRIMEIROS_PASSOS.md). A primeira Release oficial será gerada automaticamente após um push na branch main e ficará disponível em GitHub Releases. Instale a Release oficial uma única vez; depois use **Sobre → Atualizações oficiais pelo GitHub** para atualizar pelo próprio app.
+1. Abra o link no **Google Chrome**, em vez de usar o navegador interno do aplicativo GitHub.
+2. Entre na versão beta mais recente e expanda **Assets**.
+3. Toque em `SINAL-BT-vX.Y.Z-beta.apk` (não escolha `Source code` nem `SHA256SUMS.txt`).
+4. Aguarde o download, abra **Arquivos → Downloads** e toque no arquivo terminado em `.apk`.
+5. Se o Android solicitar autorização, abra as configurações de **Instalar apps desconhecidos**, habilite o Chrome ou o gerenciador de arquivos usado e confirme a instalação.
 
-**Nota:** se a assinatura da versão beta for diferente, exporte relatórios e desinstale a beta antes de instalar a oficial. Android não aceita atualizar uma instalação assinada com outra chave.
+## Se aparecer “App não instalado”
 
-**Permissões:** Bluetooth/Dispositivos próximos para buscar e conectar; localização em Android 8–11 quando exigida; rede somente para consultar GitHub Releases; autorização de instalação de apps desconhecidos somente se iniciar uma atualização.
+O Android exige que atualizações mantenham **a mesma chave de assinatura**.
+As betas anteriores foram geradas com assinatura de depuração do GitHub Actions, que pode mudar entre execuções.
+
+- Se o SINAL BT já estiver instalado, entre primeiro na aba **Registros** e use **Exportar JSON** para salvar seu histórico.
+- Depois, em **Configurações → Apps → SINAL BT → Desinstalar**, retire a beta antiga.
+- Abra o novo APK em **Downloads**, autorize a origem e instale.
+- Atenção: desinstalar pode apagar dados locais que não tenham sido exportados.
+
+## Se o arquivo não baixar
+
+- Abra https://github.com/joaoguirqueiroz/SINALBT/releases no Chrome.
+- Toque no nome do arquivo APK em **Assets**.
+- Confira se há espaço livre (recomenda-se pelo menos 100 MB).
+- Não renomeie o arquivo para .zip nem tente instalar o ZIP de GitHub Actions como um aplicativo.
+
+## Se instalar mas não abrir
+
+- Verifique se o Android é versão 8.0 ou superior.
+- Em **Configurações → Apps → SINAL BT → Permissões**, permita **Dispositivos próximos/Bluetooth** quando solicitado.
+- Reinicie o Bluetooth e abra novamente o aplicativo.
+- Se o fechamento continuar, envie o modelo do aparelho, versão Android e a mensagem exibida. O resultado de uma compilação bem-sucedida não substitui testes em celulares reais.
+
+## Atualizações pelo próprio aplicativo
+
+O SINAL BT foi preparado para consultar tanto **GitHub Releases beta quanto oficiais**, mas uma beta pode exigir reinstalação quando a assinatura tiver mudado. Para atualizações confiáveis sem desinstalar, o projeto deve usar **uma chave de assinatura permanente** nos segredos do GitHub Actions.
+
+Permissões de microfone ou gravação não são solicitadas. O aplicativo não explora ativamente a CVE-2025-36911, nem força pareamentos Bluetooth.
