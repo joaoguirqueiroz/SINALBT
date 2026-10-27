@@ -31,3 +31,12 @@
 - Teste físico e confirmação de roteamento ainda necessários com os modelos reais.
 
 **Desenvolvedor:** João Guilherme · RootScope · @rootscope.br.
+
+
+## Publicação e recompilação de 26/10/2026
+
+- Recompilação solicitada para disponibilizar a revisão atual no GitHub Releases.
+- O workflow `.github/workflows/android.yml` executa testes unitários, compilação Android e Lint.
+- Uma nova beta somente será publicada caso todas as etapas terminem com sucesso.
+- Downloads oficiais deste projeto: https://github.com/joaoguirqueiroz/SINALBT/releases
+- Até configurar uma chave permanente de assinatura, cada beta utiliza assinatura de depuração; a atualização sobre a instalação anterior pode exigir desinstalação e backup dos relatórios locais.
